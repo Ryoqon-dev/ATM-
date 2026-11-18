@@ -1,0 +1,57 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  windows-tests:
+    name: Python 3.13 / Windows / Tkinter
+    runs-on: windows-latest
+    timeout-minutes: 10
+    env:
+      PYTHONUTF8: "1"
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.13"
+
+      - name: Install the source package
+        run: python -m pip install -e .
+
+      - name: Validate startup data and installed entry point
+        run: |
+          python run_atm.py --check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python -m atm_app --check
+
+      - name: Run unit, Tk integration, and architecture tests
+        run: python -X utf8 tools/run_tests.py
+
+      - name: Verify design contracts and document links
+        run: python -X utf8 tools/verify_implementation.py
+
+      - name: Add test results to the workflow summary
+        if: always()
+        shell: pwsh
+        run: |
+          $report = 'docs/results/테스트결과.md'
+          if (Test-Path -LiteralPath $report) {
+            Get-Content -Encoding utf8 -LiteralPath $report |
+              Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          }

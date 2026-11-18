@@ -1,0 +1,26 @@
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.coverage
+htmlcov/
+build/
+dist/
+*.egg-info/
+.idea/
+.vscode/
+desktop.ini
+Thumbs.db
+
+# Local migration backups, QA images and temporary document outputs
+/.artifacts/
+/output/
+~$*.docx
+*.vpp.bak_*
+*.bak_*
+
+# Local environment files and operating-system metadata
+.env
+.env.*
+!.env.example
+.DS_Store

@@ -1,0 +1,35 @@
+@startuml
+actor 사용자 as U
+participant TransactionScreen as T
+participant LoginScreen as L
+participant AccountManager as M
+participant VirtualAccount as A
+participant ScreenData as S
+U -> T : 로그인요청 OP-01
+T -> L : 비밀번호형식확인 OP-09
+L --> T : 형식 검사 결과
+alt 형식 유효
+ T -> M : 로그인확인 OP-31
+ M -> A : 거래차단여부확인 OP-44
+ alt 미차단
+  M -> A : 비밀번호일치확인 OP-37
+  alt 일치
+   M -> A : 오류횟수초기화 OP-42
+   M --> T : SUCCESS
+   T -> S : 계좌번호저장 OP-24
+   T -> T : 화면잔액갱신 OP-07
+  else 불일치
+   M -> A : 오류횟수늘리기 OP-41
+   opt 5회째
+    M -> A : 계좌거래차단 OP-43
+   end
+   M --> T : INVALID_CREDENTIALS / ACCOUNT_BLOCKED
+  end
+ else 이미 차단
+  M --> T : ACCOUNT_BLOCKED
+ end
+else 형식 오류
+ T -> L : 로그인경고표시 OP-10
+end
+T --> U : 결과 화면
+@enduml

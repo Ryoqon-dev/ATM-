@@ -1,0 +1,24 @@
+@startuml
+start
+:FP-01.1 계좌번호·PIN 입력;
+if (FP-01.2 형식 유효?) then (예)
+ :FP-01.3 계좌 검색·차단 검사;
+ if (등록·미차단?) then (예)
+  if (PIN 일치?) then (예)
+   :f=0;
+   :FP-01.5 계좌번호 저장·잔액·메뉴 표시;
+  else (아니오)
+   :FP-01.4 f+1;
+   if (f=5?) then (예)
+    :계좌 차단·세션 초기화;
+   endif
+   :로그인 경고·재입력;
+  endif
+ else (아니오)
+  :로그인 거절·재입력;
+ endif
+else (아니오)
+ :형식 안내·재입력 (f 무변경);
+endif
+stop
+@enduml

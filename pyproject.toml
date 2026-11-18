@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tips-atm-simulator"
+version = "1.0.0"
+description = "소프트웨어공학 개인 프로젝트: 가상 계좌 ATM 데스크톱 시뮬레이터"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = []
+
+[project.gui-scripts]
+tips-atm = "atm_app.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["atm_app*"]
+
+[tool.setuptools.package-data]
+atm_app = ["infrastructure/data/*.json"]

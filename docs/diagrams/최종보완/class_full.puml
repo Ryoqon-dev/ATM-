@@ -1,0 +1,139 @@
+@startuml
+skinparam defaultFontName Malgun Gothic
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam nodesep 70
+skinparam ranksep 75
+hide empty members
+class TransactionScreen {
+  - screenData: ScreenData
+  - accountManager: AccountManager
+  - processing: boolean
+  ' OP-01
+  +로그인요청(accountNumber: String, password: String): void
+  ' OP-02
+  +거래메뉴선택(menu: String): void
+  ' OP-03
+  +입금요청(amountText: String): void
+  ' OP-04
+  +출금요청(amountText: String): void
+  ' OP-05
+  +가상이체요청(targetAccountNumber: String, amountText: String): void
+  ' OP-06
+  +거래종료(): void
+  ' OP-07
+  -화면잔액갱신(): void
+}
+class LoginScreen {
+  ' OP-08
+  +로그인화면표시(): void
+  ' OP-09
+  +비밀번호형식확인(password: String): boolean
+  ' OP-10
+  +로그인경고표시(message: String): void
+}
+class MenuScreen {
+  ' OP-11
+  +잔액과메뉴표시(balance: int): void
+}
+class DepositScreen {
+  - depositLimit: int
+  ' OP-12
+  +입금액입력화면표시(): void
+  ' OP-13
+  +입금액형식확인(amountText: String): boolean
+  ' OP-14
+  +입금한도확인(amount: int): boolean
+  ' OP-15
+  +입금진행안내(): void
+  ' OP-16
+  +입금결과표시(message: String): void
+}
+class WithdrawalScreen {
+  - withdrawalUnit: int
+  - withdrawalLimit: int
+  ' OP-17
+  +출금액입력화면표시(): void
+  ' OP-18
+  +출금단위확인(amount: int): boolean
+  ' OP-19
+  +출금한도확인(amount: int): boolean
+  ' OP-20
+  +출금결과표시(message: String): void
+  ' OP-21
+  +명세표출력여부안내(): void
+}
+class TransferScreen {
+  ' OP-22
+  +이체입력화면표시(): void
+  ' OP-23
+  +이체결과표시(message: String): void
+}
+class ScreenData {
+  - accountNumber: String | null
+  - shownBalance: int | null
+  - selectedMenu: String | null
+  - amountText: String
+  - targetAccountNumber: String
+  ' OP-24
+  +계좌번호저장(accountNumber: String): void
+  ' OP-25
+  +계좌번호읽기(): String | null
+  ' OP-26
+  +표시잔액저장(balance: int): void
+  ' OP-27
+  +거래입력정보저장(menu: String, amountText: String, targetAccountNumber: String): void
+  ' OP-28
+  +화면정보지우기(): void
+}
+class AccountManager {
+  - accounts: List<VirtualAccount>
+  ' OP-29
+  -가상계좌찾기(accountNumber: String): VirtualAccount | null
+  ' OP-30
+  -비밀번호오류처리(account: VirtualAccount): void
+  ' OP-31
+  +로그인확인(accountNumber: String, password: String): String
+  ' OP-32
+  +계좌잔액조회(accountNumber: String): int
+  ' OP-33
+  +입금처리(accountNumber: String, amount: int): boolean
+  ' OP-34
+  +출금처리(accountNumber: String, amount: int): boolean
+  ' OP-35
+  +가상이체처리(fromAccountNumber: String, targetAccountNumber: String, amount: int): boolean
+}
+class VirtualAccount {
+  - accountNumber: String
+  - password: String
+  - balance: int
+  - failedCount: int
+  - blocked: boolean
+  ' OP-36
+  +계좌번호읽기(): String
+  ' OP-37
+  +비밀번호일치확인(password: String): boolean
+  ' OP-38
+  +잔액읽기(): int
+  ' OP-39
+  +잔액더하기(amount: int): void
+  ' OP-40
+  +잔액빼기(amount: int): void
+  ' OP-41
+  +오류횟수늘리기(): int
+  ' OP-42
+  +오류횟수초기화(): void
+  ' OP-43
+  +계좌거래차단(): void
+  ' OP-44
+  +거래차단여부확인(): boolean
+}
+TransactionScreen ..> LoginScreen
+TransactionScreen ..> MenuScreen
+TransactionScreen ..> DepositScreen
+TransactionScreen ..> WithdrawalScreen
+TransactionScreen ..> TransferScreen
+TransactionScreen "1" *--> "1" ScreenData
+TransactionScreen "1" --> "1" AccountManager
+AccountManager "1" --> "0..*" VirtualAccount
+@enduml

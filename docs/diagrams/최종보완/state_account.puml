@@ -1,0 +1,16 @@
+@startuml
+skinparam defaultFontName Malgun Gothic
+state "거래 가능" as Active
+state "거래 차단" as Blocked
+state init <<choice>>
+[*] --> init
+init --> Active : [seed.blocked=false]
+init --> Blocked : [seed.blocked=true]
+Active : PIN 불일치 [f<4] / f=f+1
+Active : PIN 일치 / f=0
+Active : 입금 [검사 통과] / B=B+A
+Active : 출금·가상이체 [검사 통과] / B=B-A
+Active : 형식 오류·취소·잔액 부족 / 무변경
+Active --> Blocked : PIN 불일치 [f=4] / f=5, blocked=true
+Blocked : 로그인·거래 요청 / 거절
+@enduml

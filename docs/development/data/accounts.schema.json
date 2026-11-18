@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ATM simulation seed",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "accounts"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "accounts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "accountNumber",
+          "password",
+          "balance",
+          "failedCount",
+          "blocked"
+        ],
+        "properties": {
+          "accountNumber": {
+            "type": "string",
+            "pattern": "^[0-9]{12}$"
+          },
+          "password": {
+            "type": "string",
+            "pattern": "^[0-9]{4}$"
+          },
+          "balance": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9999999999
+          },
+          "failedCount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 5
+          },
+          "blocked": {
+            "type": "boolean"
+          }
+        }
+      }
+    }
+  }
+}

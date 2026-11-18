@@ -1,0 +1,17 @@
+@startuml
+left to right direction
+skinparam defaultFontName Malgun Gothic
+actor 사용자 as U
+rectangle "ATM 제어 및 관리 시스템" {
+usecase "UC-01 로그인·잔액 조회" as L
+usecase "UC-02 입금" as D
+usecase "UC-03 출금" as W
+usecase "UC-04 가상 이체" as T
+usecase "UC-05 거래 종료" as E
+}
+U -- L
+U -- D
+U -- W
+U -- T
+U -- E
+@enduml

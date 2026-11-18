@@ -1,0 +1,596 @@
+[
+  {
+    "name": "TransactionScreen",
+    "role": "전체 거래 흐름을 조정하는 제어 객체",
+    "attrs": [
+      [
+        "screenData",
+        "ScreenData",
+        "현재 세션 정보 1개"
+      ],
+      [
+        "accountManager",
+        "AccountManager",
+        "공유 계좌 서비스 1개"
+      ],
+      [
+        "processing",
+        "boolean",
+        "거래 콜백 재진입 방지; 초기값 false"
+      ]
+    ],
+    "ops": [
+      {
+        "id": "OP-01",
+        "ko": "로그인요청",
+        "en": "request_login",
+        "params": "accountNumber: String, password: String",
+        "returns": "void",
+        "behavior": "형식 검사 후 로그인확인을 호출한다. 성공하면 계좌번호를 저장하고 잔액을 갱신한다. 실패 시 경고하며 5회 차단이면 거래종료를 호출한다.",
+        "flow": "FP-01.2~05",
+        "req": "REQ-LOGIN-01~03"
+      },
+      {
+        "id": "OP-02",
+        "ko": "거래메뉴선택",
+        "en": "select_menu",
+        "params": "menu: String",
+        "returns": "void",
+        "behavior": "인증 상태를 확인하고 입금·출금·이체 입력 화면 또는 종료 동작을 선택한다. 잘못된 메뉴는 거절한다.",
+        "flow": "FP-02~05.1",
+        "req": "REQ-BANK-02,05,09; REQ-SYS-01"
+      },
+      {
+        "id": "OP-03",
+        "ko": "입금요청",
+        "en": "request_deposit",
+        "params": "amountText: String",
+        "returns": "void",
+        "behavior": "입금 형식·한도 검사, 진행 안내, AccountManager 호출, 결과 표시와 화면잔액갱신을 순서대로 수행한다.",
+        "flow": "FP-02.2~04",
+        "req": "REQ-BANK-02~04"
+      },
+      {
+        "id": "OP-04",
+        "ko": "출금요청",
+        "en": "request_withdrawal",
+        "params": "amountText: String",
+        "returns": "void",
+        "behavior": "공통 금액 형식, 출금 단위·한도를 확인하고 출금을 요청한다. 성공 시 잔액과 완료·명세표 안내를 갱신한다.",
+        "flow": "FP-03.2~05",
+        "req": "REQ-BANK-05~08"
+      },
+      {
+        "id": "OP-05",
+        "ko": "가상이체요청",
+        "en": "request_transfer",
+        "params": "targetAccountNumber: String, amountText: String",
+        "returns": "void",
+        "behavior": "대상 형식·본인 여부·양의 정수 금액을 검사하고 가상이체처리를 요청한다. 성공 시 새 잔액과 완료를 표시한다.",
+        "flow": "FP-04.2~05",
+        "req": "REQ-BANK-09~11"
+      },
+      {
+        "id": "OP-06",
+        "ko": "거래종료",
+        "en": "end_session",
+        "params": "",
+        "returns": "void",
+        "behavior": "활성 거래 처리가 끝난 뒤 화면정보지우기와 모든 입력 위젯 초기화를 수행하고 로그인화면표시를 호출한다.",
+        "flow": "FP-05.1~03",
+        "req": "REQ-SYS-01"
+      },
+      {
+        "id": "OP-07",
+        "ko": "화면잔액갱신",
+        "en": "_refresh_balance",
+        "params": "",
+        "returns": "void",
+        "behavior": "현재 계좌번호로 계좌잔액조회를 호출하고 표시잔액저장 후 잔액과메뉴표시를 호출한다. 미인증 상태이면 조회하지 않는다.",
+        "flow": "FP-01.5; FP-02~04.5",
+        "req": "REQ-BANK-01"
+      }
+    ]
+  },
+  {
+    "name": "LoginScreen",
+    "role": "로그인 입력과 경고를 담당하는 경계 객체",
+    "attrs": [],
+    "ops": [
+      {
+        "id": "OP-08",
+        "ko": "로그인화면표시",
+        "en": "show",
+        "params": "",
+        "returns": "void",
+        "behavior": "빈 계좌번호·PIN 입력란을 표시한다. PIN은 마스킹한다.",
+        "flow": "FP-01.1; FP-05.3",
+        "req": "REQ-LOGIN-01; REQ-SYS-01"
+      },
+      {
+        "id": "OP-09",
+        "ko": "비밀번호형식확인",
+        "en": "validate_pin",
+        "params": "password: String",
+        "returns": "boolean",
+        "behavior": "정규식 [0-9]{4} 전체 일치일 때만 true이다. 0123은 유효하다. 형식 오류는 계좌 오류 횟수를 바꾸지 않는다.",
+        "flow": "FP-01.2",
+        "req": "REQ-LOGIN-02"
+      },
+      {
+        "id": "OP-10",
+        "ko": "로그인경고표시",
+        "en": "show_warning",
+        "params": "message: String",
+        "returns": "void",
+        "behavior": "반환 코드에 해당하는 형식 오류·인증 실패·거래 차단 문구를 표시하고 PIN 입력란을 비운다.",
+        "flow": "FP-01.2~04",
+        "req": "REQ-LOGIN-02~03"
+      }
+    ]
+  },
+  {
+    "name": "MenuScreen",
+    "role": "잔액과 거래 메뉴를 표시하는 경계 객체",
+    "attrs": [],
+    "ops": [
+      {
+        "id": "OP-11",
+        "ko": "잔액과메뉴표시",
+        "en": "show",
+        "params": "balance: int",
+        "returns": "void",
+        "behavior": "원 단위 잔액과 입금·출금·이체·종료 버튼을 표시한다. 거래 후 메뉴 복귀 시 최신 값을 표시한다.",
+        "flow": "FP-01.5; FP-02~04.5",
+        "req": "REQ-BANK-01"
+      }
+    ]
+  },
+  {
+    "name": "DepositScreen",
+    "role": "입금 입력과 안내를 담당하는 경계 객체",
+    "attrs": [
+      [
+        "depositLimit",
+        "int",
+        "상수 1,000,000"
+      ]
+    ],
+    "ops": [
+      {
+        "id": "OP-12",
+        "ko": "입금액입력화면표시",
+        "en": "show",
+        "params": "",
+        "returns": "void",
+        "behavior": "빈 금액 입력란과 확인·취소 버튼을 표시한다.",
+        "flow": "FP-02.1",
+        "req": "REQ-BANK-02"
+      },
+      {
+        "id": "OP-13",
+        "ko": "입금액형식확인",
+        "en": "validate_amount",
+        "params": "amountText: String",
+        "returns": "boolean",
+        "behavior": "[0-9]{1,10} 전체 일치이고 정수 값이 1 이상일 때만 true이다.",
+        "flow": "FP-02.2",
+        "req": "REQ-BANK-02"
+      },
+      {
+        "id": "OP-14",
+        "ko": "입금한도확인",
+        "en": "validate_limit",
+        "params": "amount: int",
+        "returns": "boolean",
+        "behavior": "1 이상 1,000,000 이하일 때 true를 반환한다.",
+        "flow": "FP-02.2",
+        "req": "REQ-BANK-03"
+      },
+      {
+        "id": "OP-15",
+        "ko": "입금진행안내",
+        "en": "show_progress",
+        "params": "",
+        "returns": "void",
+        "behavior": "거래를 요청하기 전 “입금 중입니다.”를 표시하고 확인 버튼을 비활성화한다.",
+        "flow": "FP-02.3",
+        "req": "REQ-BANK-04"
+      },
+      {
+        "id": "OP-16",
+        "ko": "입금결과표시",
+        "en": "show_result",
+        "params": "message: String",
+        "returns": "void",
+        "behavior": "성공 또는 실패 이유와 계속 이용·종료 선택을 표시한다. 재입력이 필요하면 메뉴에서 다시 입금을 선택한다.",
+        "flow": "FP-02.4",
+        "req": "REQ-BANK-04"
+      }
+    ]
+  },
+  {
+    "name": "WithdrawalScreen",
+    "role": "출금 입력과 안내를 담당하는 경계 객체",
+    "attrs": [
+      [
+        "withdrawalUnit",
+        "int",
+        "상수 10,000"
+      ],
+      [
+        "withdrawalLimit",
+        "int",
+        "상수 1,000,000"
+      ]
+    ],
+    "ops": [
+      {
+        "id": "OP-17",
+        "ko": "출금액입력화면표시",
+        "en": "show",
+        "params": "",
+        "returns": "void",
+        "behavior": "빈 금액 입력란과 확인·취소 버튼을 표시한다.",
+        "flow": "FP-03.1",
+        "req": "REQ-BANK-05"
+      },
+      {
+        "id": "OP-18",
+        "ko": "출금단위확인",
+        "en": "validate_unit",
+        "params": "amount: int",
+        "returns": "boolean",
+        "behavior": "amount>0이고 amount%10000=0일 때만 true이다.",
+        "flow": "FP-03.2",
+        "req": "REQ-BANK-05"
+      },
+      {
+        "id": "OP-19",
+        "ko": "출금한도확인",
+        "en": "validate_limit",
+        "params": "amount: int",
+        "returns": "boolean",
+        "behavior": "1 이상 1,000,000 이하일 때 true를 반환한다.",
+        "flow": "FP-03.2",
+        "req": "REQ-BANK-06"
+      },
+      {
+        "id": "OP-20",
+        "ko": "출금결과표시",
+        "en": "show_result",
+        "params": "message: String",
+        "returns": "void",
+        "behavior": "출금 완료 또는 형식·단위·한도·잔액 오류를 표시한다.",
+        "flow": "FP-03.5",
+        "req": "REQ-BANK-07~08"
+      },
+      {
+        "id": "OP-21",
+        "ko": "명세표출력여부안내",
+        "en": "show_receipt_prompt",
+        "params": "",
+        "returns": "void",
+        "behavior": "성공한 출금에 한해 “명세표를 출력하시겠습니까?”를 안내한다. 예·아니오 선택 후 실제 출력 없이 계속 이용·종료를 선택하게 한다.",
+        "flow": "FP-03.5",
+        "req": "REQ-BANK-08"
+      }
+    ]
+  },
+  {
+    "name": "TransferScreen",
+    "role": "가상 이체 입력과 결과를 담당하는 경계 객체",
+    "attrs": [],
+    "ops": [
+      {
+        "id": "OP-22",
+        "ko": "이체입력화면표시",
+        "en": "show",
+        "params": "",
+        "returns": "void",
+        "behavior": "대상 계좌번호·금액 입력란과 확인·취소 버튼을 표시한다.",
+        "flow": "FP-04.1",
+        "req": "REQ-BANK-09"
+      },
+      {
+        "id": "OP-23",
+        "ko": "이체결과표시",
+        "en": "show_result",
+        "params": "message: String",
+        "returns": "void",
+        "behavior": "가상 이체 완료 또는 대상·금액·잔액 오류를 표시한다. 실제 은행 송금으로 표현하지 않는다.",
+        "flow": "FP-04.5",
+        "req": "REQ-BANK-11"
+      }
+    ]
+  },
+  {
+    "name": "ScreenData",
+    "role": "한 세션의 표시 정보만 보유하는 정보 객체",
+    "attrs": [
+      [
+        "accountNumber",
+        "String | null",
+        "인증 후 설정, 초기값 null"
+      ],
+      [
+        "shownBalance",
+        "int | null",
+        "화면용 사본, 초기값 null"
+      ],
+      [
+        "selectedMenu",
+        "String | null",
+        "초기값 null"
+      ],
+      [
+        "amountText",
+        "String",
+        "초기값 빈 문자열"
+      ],
+      [
+        "targetAccountNumber",
+        "String",
+        "초기값 빈 문자열"
+      ]
+    ],
+    "ops": [
+      {
+        "id": "OP-24",
+        "ko": "계좌번호저장",
+        "en": "set_account_number",
+        "params": "accountNumber: String",
+        "returns": "void",
+        "behavior": "인증에 성공한 가상 계좌번호만 저장한다.",
+        "flow": "FP-01.5",
+        "req": "REQ-LOGIN-01"
+      },
+      {
+        "id": "OP-25",
+        "ko": "계좌번호읽기",
+        "en": "get_account_number",
+        "params": "",
+        "returns": "String | null",
+        "behavior": "현재 인증 계좌번호를 반환한다. null이면 비인증 세션이다.",
+        "flow": "FP-02~04.3",
+        "req": "REQ-LOGIN-01; REQ-Q-01"
+      },
+      {
+        "id": "OP-26",
+        "ko": "표시잔액저장",
+        "en": "set_shown_balance",
+        "params": "balance: int",
+        "returns": "void",
+        "behavior": "AccountManager에서 읽은 잔액을 화면 사본으로 저장한다. 이 값으로 출금 승인을 결정하지 않는다.",
+        "flow": "FP-01.5; FP-02~04.5",
+        "req": "REQ-BANK-01"
+      },
+      {
+        "id": "OP-27",
+        "ko": "거래입력정보저장",
+        "en": "set_transaction_input",
+        "params": "menu: String, amountText: String, targetAccountNumber: String",
+        "returns": "void",
+        "behavior": "현재 거래의 메뉴와 원문 금액, 대상 번호를 임시 저장한다. PIN은 저장하지 않는다.",
+        "flow": "FP-02~04.1",
+        "req": "REQ-BANK-02,05,09"
+      },
+      {
+        "id": "OP-28",
+        "ko": "화면정보지우기",
+        "en": "clear",
+        "params": "",
+        "returns": "void",
+        "behavior": "다섯 속성을 초기값으로 되돌린다. 계좌의 잔액·오류 횟수·차단 상태는 수정하지 않는다.",
+        "flow": "FP-05.2",
+        "req": "REQ-SYS-01"
+      }
+    ]
+  },
+  {
+    "name": "AccountManager",
+    "role": "계좌 조회·인증·업무 검증을 담당하는 제어 객체",
+    "attrs": [
+      [
+        "accounts",
+        "List<VirtualAccount>",
+        "앱 시작 시 검증된 시드에서 로드한 목록"
+      ]
+    ],
+    "ops": [
+      {
+        "id": "OP-29",
+        "ko": "가상계좌찾기",
+        "en": "_find_account",
+        "params": "accountNumber: String",
+        "returns": "VirtualAccount | null",
+        "behavior": "계좌번호가 일치하는 단일 계좌를 반환한다. 미등록 계좌이면 null이며 잔액 조회/거래는 허용하지 않는다.",
+        "flow": "FP-01.3; FP-02~04.3",
+        "req": "REQ-LOGIN-01"
+      },
+      {
+        "id": "OP-30",
+        "ko": "비밀번호오류처리",
+        "en": "_handle_failed_pin",
+        "params": "account: VirtualAccount",
+        "returns": "void",
+        "behavior": "오류횟수늘리기 결과가 5이면 계좌거래차단을 호출한다. 이미 차단된 계좌에는 다시 증가시키지 않는다.",
+        "flow": "FP-01.4",
+        "req": "REQ-LOGIN-03"
+      },
+      {
+        "id": "OP-31",
+        "ko": "로그인확인",
+        "en": "authenticate",
+        "params": "accountNumber: String, password: String",
+        "returns": "String",
+        "behavior": "형식·등록·차단 여부를 확인한다. PIN 일치 시 오류횟수초기화 후 SUCCESS, 불일치 시 INVALID_CREDENTIALS 또는 ACCOUNT_BLOCKED를 반환한다.",
+        "flow": "FP-01.2~04",
+        "req": "REQ-LOGIN-01~03"
+      },
+      {
+        "id": "OP-32",
+        "ko": "계좌잔액조회",
+        "en": "get_balance",
+        "params": "accountNumber: String",
+        "returns": "int",
+        "behavior": "등록된 미차단 계좌의 잔액을 반환한다. 잘못된 요청은 명시적 업무 오류를 발생시키며 0원으로 위장하지 않는다.",
+        "flow": "FP-01.5; FP-02~04.3",
+        "req": "REQ-BANK-01,07,10"
+      },
+      {
+        "id": "OP-33",
+        "ko": "입금처리",
+        "en": "deposit",
+        "params": "accountNumber: String, amount: int",
+        "returns": "boolean",
+        "behavior": "미차단 계좌, 정수형 양수, 100만 원 한도, 잔액 상한을 재검사한 뒤 잔액더하기를 한 번 호출한다. 실패하면 false이고 무변경이다.",
+        "flow": "FP-02.3",
+        "req": "REQ-BANK-02~04; REQ-Q-03"
+      },
+      {
+        "id": "OP-34",
+        "ko": "출금처리",
+        "en": "withdraw",
+        "params": "accountNumber: String, amount: int",
+        "returns": "boolean",
+        "behavior": "정수형 양수·1만 원 단위·100만 원 한도·실제 잔액·차단 여부를 다시 확인한 뒤 잔액빼기를 한 번 호출한다.",
+        "flow": "FP-03.3~04",
+        "req": "REQ-BANK-05~08"
+      },
+      {
+        "id": "OP-35",
+        "ko": "가상이체처리",
+        "en": "transfer",
+        "params": "fromAccountNumber: String, targetAccountNumber: String, amount: int",
+        "returns": "boolean",
+        "behavior": "대상 12자리·본인 제외·정수형 양수·실제 잔액·차단 여부를 재검사한다. 송신 계좌에서만 한 번 차감하며 대상 계좌는 생성·변경하지 않는다.",
+        "flow": "FP-04.2~04",
+        "req": "REQ-BANK-09~11"
+      }
+    ]
+  },
+  {
+    "name": "VirtualAccount",
+    "role": "가상 계좌 한 개의 지속되는 도메인 상태",
+    "attrs": [
+      [
+        "accountNumber",
+        "String",
+        "고유한 ASCII 숫자 12자리, 변경 금지"
+      ],
+      [
+        "password",
+        "String",
+        "가상 PIN ASCII 숫자 4자리"
+      ],
+      [
+        "balance",
+        "int",
+        "0~9,999,999,999"
+      ],
+      [
+        "failedCount",
+        "int",
+        "0~5, 초기값 0"
+      ],
+      [
+        "blocked",
+        "boolean",
+        "failedCount=5와 동치, 초기값 false"
+      ]
+    ],
+    "ops": [
+      {
+        "id": "OP-36",
+        "ko": "계좌번호읽기",
+        "en": "get_account_number",
+        "params": "",
+        "returns": "String",
+        "behavior": "자신의 고유 계좌번호를 반환한다.",
+        "flow": "FP-01.3",
+        "req": "REQ-LOGIN-01"
+      },
+      {
+        "id": "OP-37",
+        "ko": "비밀번호일치확인",
+        "en": "matches_pin",
+        "params": "password: String",
+        "returns": "boolean",
+        "behavior": "입력 PIN과 가상 PIN의 문자열 일치 여부를 반환한다. 숫자로 변환하지 않는다.",
+        "flow": "FP-01.3",
+        "req": "REQ-LOGIN-01~02"
+      },
+      {
+        "id": "OP-38",
+        "ko": "잔액읽기",
+        "en": "get_balance",
+        "params": "",
+        "returns": "int",
+        "behavior": "현재 계좌 잔액을 반환한다.",
+        "flow": "FP-01.5; FP-02~04.3",
+        "req": "REQ-BANK-01,07,10"
+      },
+      {
+        "id": "OP-39",
+        "ko": "잔액더하기",
+        "en": "credit",
+        "params": "amount: int",
+        "returns": "void",
+        "behavior": "검사된 양수를 잔액에 더한다. 음수·상한 초과·차단이면 변경 전 거절한다.",
+        "flow": "FP-02.3",
+        "req": "REQ-BANK-04"
+      },
+      {
+        "id": "OP-40",
+        "ko": "잔액빼기",
+        "en": "debit",
+        "params": "amount: int",
+        "returns": "void",
+        "behavior": "검사된 양수만 차감한다. 음수 잔액이 되거나 차단이면 변경 전 거절한다.",
+        "flow": "FP-03.4; FP-04.4",
+        "req": "REQ-BANK-08,11"
+      },
+      {
+        "id": "OP-41",
+        "ko": "오류횟수늘리기",
+        "en": "increment_failed_count",
+        "params": "",
+        "returns": "int",
+        "behavior": "미차단 상태에서 실패 횟수를 최대 5까지 증가시킨다. 5회 도달 시 blocked도 같은 호출 안에서 true로 설정하여 불변식을 유지하고 새 횟수를 반환한다.",
+        "flow": "FP-01.4",
+        "req": "REQ-LOGIN-03"
+      },
+      {
+        "id": "OP-42",
+        "ko": "오류횟수초기화",
+        "en": "reset_failed_count",
+        "params": "",
+        "returns": "void",
+        "behavior": "미차단 계좌의 인증 성공 시 횟수를 0으로 바꾼다. 차단 해제 용도로 호출할 수 없다.",
+        "flow": "FP-01.4",
+        "req": "REQ-LOGIN-03"
+      },
+      {
+        "id": "OP-43",
+        "ko": "계좌거래차단",
+        "en": "block",
+        "params": "",
+        "returns": "void",
+        "behavior": "failedCount=5, blocked=true로 설정한다. 이미 차단이면 그대로 유지하는 멱등 동작이다.",
+        "flow": "FP-01.4",
+        "req": "REQ-LOGIN-03"
+      },
+      {
+        "id": "OP-44",
+        "ko": "거래차단여부확인",
+        "en": "is_blocked",
+        "params": "",
+        "returns": "boolean",
+        "behavior": "해당 계좌의 차단 여부를 반환한다.",
+        "flow": "FP-01.3; FP-02~04.3",
+        "req": "REQ-LOGIN-03; REQ-Q-01"
+      }
+    ]
+  }
+]

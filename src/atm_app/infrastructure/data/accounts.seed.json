@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "accounts": [
+    {"accountNumber": "100100000001", "password": "0123", "balance": 500000, "failedCount": 0, "blocked": false},
+    {"accountNumber": "100100000002", "password": "5678", "balance": 2000000, "failedCount": 0, "blocked": false},
+    {"accountNumber": "100100000003", "password": "0000", "balance": 0, "failedCount": 0, "blocked": false}
+  ]
+}

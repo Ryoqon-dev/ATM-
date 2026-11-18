@@ -1,0 +1,298 @@
+[
+  {
+    "id": "TC-L01",
+    "requirements": "REQ-LOGIN-01; REQ-BANK-01",
+    "purpose": "로그인",
+    "input": "시드 A, PIN 0123",
+    "expected": "성공; 잔액 500000 표시; f=0",
+    "status": "NOT_RUN"
+  },
+  {
+    "id": "TC-L02",
+    "requirements": "REQ-LOGIN-02",
+    "purpose": "형식 오류",
+    "input": "PIN 빈 값/123/12345/12a3/１２３４",
+    "expected": "실패; f와 잔액 무변경",
+    "status": "NOT_RUN"
+  },
+  {
+    "id": "TC-L03",
+    "requirements": "REQ-LOGIN-03",
+    "purpose": "1~4회 오류",
+    "input": "A에 틀린 형식상 유효 PIN 9999 연속 4회",
+    "expected": "f=4; blocked=false; 세션 없음",
+    "status": "NOT_RUN"
+  },
+  {
+    "id": "TC-L04",
+    "requirements": "REQ-LOGIN-03",
+    "purpose": "5회 차단",
+    "input": "TC-L03 뒤 9999 한 번 추가",
+    "expected": "f=5; blocked=true; 초기 로그인",
+    "status": "NOT_RUN"
+  },
+  {
+    "id": "TC-L05",
+    "requirements": "REQ-LOGIN-03",
+    "purpose": "차단 계좌",
+    "input": "TC-L04 뒤 올바른 PIN 0123",
+    "expected": "거절; f=5 유지",
+    "status": "NOT_RUN"
+  },
+  {
+    "id": "TC-L06",
+    "requirements": "REQ-LOGIN-03",
+    "purpose": "성공 시 오류 초기화",
+    "input": "A에 2회 불일치 후 0123",
+    "expected": "성공; f=0",
+    "status": "NOT_RUN"
+  },
+  {
+    "id": "TC-L07",
+    "requirements": "REQ-LOGIN-01; REQ-LOGIN-03",
+    "purpose": "미등록",
+    "input": "888888888888 / 0123",
+    "expected": "인증 실패; 기존 계좌 f 무변경",
+    "status": "NOT_RUN"
+  },
+  {
+    "id": "TC-L08",
+    "requirements": "REQ-LOGIN-03",
+    "purpose": "계좌별 횟수",
+    "input": "A에 4회 불일치 후 B 정상 로그인",
+    "expected": "B 성공; A f=4 유지; B f=0",
+    "status": "NOT_RUN"
+  },
+  {
+    "id": "TC-D01",
+    "requirements": "REQ-BANK-02",
+    "purpose": "입금 형식",
+    "input": "0/-1/1.5/공백/1,000/문자/11자리/True 직접 호출",
+    "expected": "거절; 잔액 무변경",
+    "status": "NOT_RUN"
+  },
+  {
+    "id": "TC-D02",
+    "requirements": "REQ-BANK-03~04",
+    "purpose": "입금 상한",
+    "input": "A에 1000000 입금",
+    "expected": "성공; 잔액 1500000",
+    "status": "NOT_RUN"
+  },
+  {
+    "id": "TC-D03",
+    "requirements": "REQ-BANK-03",
+    "purpose": "한도 초과",
+    "input": "A에 1000001 입금",
+    "expected": "거절; 잔액 500000",
+    "status": "NOT_RUN"
+  },
+  {
+    "id": "TC-D04",
+    "requirements": "REQ-BANK-02~04",
+    "purpose": "최소 입금",
+    "input": "A에 1 입금",
+    "expected": "성공; 잔액 500001",
+    "status": "NOT_RUN"
+  },
+  {
+    "id": "TC-D05",
+    "requirements": "REQ-Q-03",
+    "purpose": "잔액 상한",
+    "input": "잔액 9999999999에서 1 입금",
+    "expected": "거절; 상한 유지",
+    "status": "NOT_RUN"
+  },
+  {
+    "id": "TC-W01",
+    "requirements": "REQ-BANK-05",
+    "purpose": "단위 오류",
+    "input": "A에서 15000 출금",
+    "expected": "거절; 잔액 500000",
+    "status": "NOT_RUN"
+  },
+  {
+    "id": "TC-W02",
+    "requirements": "REQ-BANK-06",
+    "purpose": "출금 상한",
+    "input": "잔액 2000000에서 1000000 출금",
+    "expected": "성공; 잔액 1000000",
+    "status": "NOT_RUN"
+  },
+  {
+    "id": "TC-W03",
+    "requirements": "REQ-BANK-06",
+    "purpose": "한도 초과",
+    "input": "잔액 2000000에서 1010000 출금",
+    "expected": "거절; 잔액 2000000",
+    "status": "NOT_RUN"
+  },
+  {
+    "id": "TC-W04",
+    "requirements": "REQ-BANK-07~08",
+    "purpose": "전액 출금",
+    "input": "A에서 500000 출금",
+    "expected": "성공; 잔액 0; 완료·명세표 안내",
+    "status": "NOT_RUN"
+  },
+  {
+    "id": "TC-W05",
+    "requirements": "REQ-BANK-07",
+    "purpose": "잔액 부족",
+    "input": "A에서 510000 출금",
+    "expected": "거절; 잔액 500000",
+    "status": "NOT_RUN"
+  },
+  {
+    "id": "TC-W06",
+    "requirements": "REQ-BANK-05",
+    "purpose": "출금 형식",
+    "input": "0/-10000/문자/소수/빈 값",
+    "expected": "거절; 잔액 무변경",
+    "status": "NOT_RUN"
+  },
+  {
+    "id": "TC-T01",
+    "requirements": "REQ-BANK-09~11",
+    "purpose": "가상 이체",
+    "input": "A→999999999999, 20000",
+    "expected": "A=480000; 수신 생성·입금 없음",
+    "status": "NOT_RUN"
+  },
+  {
+    "id": "TC-T02",
+    "requirements": "REQ-BANK-10",
+    "purpose": "이체 잔액 부족",
+    "input": "A→999999999999, 500001",
+    "expected": "거절; A=500000",
+    "status": "NOT_RUN"
+  },
+  {
+    "id": "TC-T03",
+    "requirements": "REQ-BANK-09",
+    "purpose": "대상 오류",
+    "input": "본인/11자리/13자리/문자/빈 대상",
+    "expected": "거절; 잔액 무변경",
+    "status": "NOT_RUN"
+  },
+  {
+    "id": "TC-T04",
+    "requirements": "REQ-BANK-09",
+    "purpose": "이체 금액 오류",
+    "input": "0/음수/빈 값/소수/문자",
+    "expected": "거절; 잔액 무변경",
+    "status": "NOT_RUN"
+  },
+  {
+    "id": "TC-T05",
+    "requirements": "REQ-BANK-11",
+    "purpose": "이체 별도 한도 없음",
+    "input": "잔액 2000000→999999999999, 1500000",
+    "expected": "성공; 송신 500000",
+    "status": "NOT_RUN"
+  },
+  {
+    "id": "TC-T06",
+    "requirements": "REQ-BANK-11",
+    "purpose": "로컬 대상의 무변경",
+    "input": "A→B, 20000",
+    "expected": "A=480000; B=2000000 유지",
+    "status": "NOT_RUN"
+  },
+  {
+    "id": "TC-S01",
+    "requirements": "REQ-SYS-01",
+    "purpose": "종료 정리",
+    "input": "입력·세션을 채운 후 종료",
+    "expected": "로그인 화면; 모든 임시값 초기화; 계좌 잔액 유지",
+    "status": "NOT_RUN"
+  },
+  {
+    "id": "TC-S02",
+    "requirements": "REQ-SYS-01",
+    "purpose": "로그아웃 후 재로그인",
+    "input": "A에 1원 입금→종료→동일 프로세스 로그인",
+    "expected": "잔액 500001 유지",
+    "status": "NOT_RUN"
+  },
+  {
+    "id": "TC-S03",
+    "requirements": "REQ-SYS-01",
+    "purpose": "재시작 초기화",
+    "input": "시드와 다른 거래·차단 후 앱 재시작",
+    "expected": "시드 기준 잔액·횟수·차단으로 복구",
+    "status": "NOT_RUN"
+  },
+  {
+    "id": "TC-S04",
+    "requirements": "REQ-Q-03",
+    "purpose": "입력 취소",
+    "input": "금융 입력 중 취소",
+    "expected": "메뉴 복귀; 입력 비움; 잔액 유지",
+    "status": "NOT_RUN"
+  },
+  {
+    "id": "TC-Q01",
+    "requirements": "REQ-Q-01",
+    "purpose": "미인증 요청",
+    "input": "세션 없는 상태에서 금융 요청",
+    "expected": "거절; 모든 잔액 무변경",
+    "status": "NOT_RUN"
+  },
+  {
+    "id": "TC-Q02",
+    "requirements": "REQ-Q-01",
+    "purpose": "차단 서비스 요청",
+    "input": "차단 계좌에 서비스 직접 입출금·이체",
+    "expected": "모두 거절; 잔액 무변경",
+    "status": "NOT_RUN"
+  },
+  {
+    "id": "TC-Q03",
+    "requirements": "REQ-Q-02",
+    "purpose": "중복 확인",
+    "input": "GUI 확인 버튼 빠른 더블클릭",
+    "expected": "현재 요청 1회만 반영; 처리 중 버튼 비활성",
+    "status": "NOT_RUN"
+  },
+  {
+    "id": "TC-Q04",
+    "requirements": "REQ-Q-03",
+    "purpose": "검증 우회",
+    "input": "서비스에 음수/True/한도초과 직접 전달",
+    "expected": "거절; 잔액 무변경",
+    "status": "NOT_RUN"
+  },
+  {
+    "id": "TC-Q05",
+    "requirements": "REQ-Q-04",
+    "purpose": "PIN 노출",
+    "input": "입력·오류·종료 화면과 로그 확인",
+    "expected": "PIN 마스킹; ScreenData/로그에 PIN 없음",
+    "status": "NOT_RUN"
+  },
+  {
+    "id": "TC-Q06",
+    "requirements": "REQ-Q-05",
+    "purpose": "초기 자료 오류",
+    "input": "중복 번호/음수 잔액/f=5 blocked=false 시드",
+    "expected": "전체 로드 거절; 거래 UI 열지 않음",
+    "status": "NOT_RUN"
+  },
+  {
+    "id": "TC-Q07",
+    "requirements": "REQ-Q-03",
+    "purpose": "예상 밖 예외",
+    "input": "승인 전 서비스 예외 주입",
+    "expected": "성공 문구 없음; 잔액 무변경; 세션 정리",
+    "status": "NOT_RUN"
+  },
+  {
+    "id": "TC-Q08",
+    "requirements": "REQ-BANK-01; REQ-Q-03",
+    "purpose": "표시 사본 우회",
+    "input": "shownBalance를 실제보다 크게 조작 후 초과 출금",
+    "expected": "실제 잔액으로 거절; 잔액 무변경",
+    "status": "NOT_RUN"
+  }
+]

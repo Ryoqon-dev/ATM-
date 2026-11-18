@@ -1,0 +1,25 @@
+@startuml
+actor 사용자 as U
+participant TransactionScreen as T
+participant AccountManager as M
+participant VirtualAccount as A
+participant ScreenData as S
+U -> T : 거래요청 OP-03/04/05
+T -> T : 인증·형식·한도 검사
+alt 유효
+ T -> M : 입금처리/출금처리/가상이체처리 OP-33/34/35
+ M -> M : 계좌·차단·업무 규칙 재검사
+ alt 승인
+  M -> A : 잔액더하기/잔액빼기 OP-39/40
+  M --> T : true
+  T -> M : 계좌잔액조회 OP-32
+  M --> T : 현재 잔액
+  T -> S : 표시잔액저장 OP-26
+ else 거절
+  M --> T : false (잔액 무변경)
+ end
+else 입력 오류
+ T -> T : 결과 안내 (잔액 무변경)
+end
+T --> U : 결과·계속 이용·종료
+@enduml

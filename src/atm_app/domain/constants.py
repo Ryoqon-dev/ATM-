@@ -1,0 +1,7 @@
+"""Business constants shared by the GUI and service validation."""
+
+DEPOSIT_LIMIT = 1_000_000
+WITHDRAWAL_LIMIT = 1_000_000
+WITHDRAWAL_UNIT = 10_000
+MAX_BALANCE = 9_999_999_999
+MAX_PIN_FAILURES = 5
